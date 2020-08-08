@@ -56,9 +56,12 @@ class Node:
             print(f'starting with layer {i + 1}')
             print(f'    looks like this: {a}')
             for c, b in enumerate(a):
-                b.append([random.randint(0,1) for c in range(len(self.w[i]))])
-                b.append(random.randint(0,1))
-                b.append(0)
+                b.append([random.randint(0,1) for c in range(len(self.w[i]))]) # This is fw prop weights
+                b.append(random.randint(0,1)) # This is fw prop biases
+                b.append(0) # This is fw prop z values
+                b.append(0) # This is fw prop a values
+                b.append(0) # This is bw prop dE/db value
+                b.append([0 for c in range(len(self.w[i]))]) # This is bw dE/dw values
                 print(f'working with layer {i + 1} on node {c} that now has {len(b[0])} weights with bias {b[1]}')
         print('done initialization')
     def forward(self, l:list):
@@ -69,14 +72,18 @@ class Node:
             # we are now at the first hidden layer
             if i == 0:
                 for node in v:
-                    node[2] = node[1]
+                    # node[2] = node[1]
                     for weightnum, weight in node[0]:
                         node[2] += (wieght * l[weightnum])
+                    node[3] = relu(node[2], node[1])
+                    node[4] = 0
+                    node[5] = [0 for c in range(len(v))]
             else:
                 for node in v:
-                    node[2] = node[1]
+                    # node[2] = node[1]
                     for weightnum, weight in node[0]:
                         node[2] += (weight * self.w[i][weightnum][2])
+                    node[3] = relu(node[2], node[1])
         print([node[2] for node in self.w[-1]])
         print('done with the foward pass')
     def backward(self, ans):
@@ -98,12 +105,27 @@ class Node:
             # dz/dw = a(L-1)
 
             # All together
-            Cost.insert(0, [ans - self.w[-1][i][2],\
-                    (ans - self.w[-1][i][2])*\
-                    (sum([self.w[-2][weightnum][2] for weightnum, weight in self.w[-1][i][0]])\
-                    if sum([weight ] else 0)*\
-                    (self.w[-2][j][2])]) 
-            
+            # Cost.insert(0, [ans - self.w[-1][i][2],\
+             #        (ans - self.w[-1][i][2])*\
+             #        (sum([self.w[-2][weightnum][2] for weightnum, weight in self.w[-1][i][0]])\
+             #        if sum([weight ] else 0)*\
+             #        (self.w[-2][j][2])]) 
+            i = len(self.w) - 1
+            for k in range(len(self.w[i])):
+                for j in range(len(self.w[i-1])):
+                    self.w[i][k][5][j] += (ans[k] - self.w[i][k][3]) * (1 if self.w[i][k][2] > self.w[i][k][1] else 0) * (self.w[j][k][3])
+                self.w[i][k][4] += (ans[k] - self.w[i][k][3]) * (1 if self.w[i][k][2] > self.w[i][k][1] else 0) # This is for bprop biases
+            for i in range(len(self.w) - 1, 1, -1):
+                for k in range(len(self.w[i])):
+                    self.w[i-1][k][4] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0)
+                    for j in range(len(self.w[i])):
+                        self.w[i-1][k][5][j] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0) * self.w[i-1][k][1]
+
+            i = 1
+            for k in range(len(self.w[i])):
+                self.w[i-1][k][4] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0)
+                for j in range(len(self.w[i])):
+                    self.w[i-1][k][5][j] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0) * self.w[i-1][k][1]
 
 
 if __name__ == '__main__':
