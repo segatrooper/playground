@@ -33,7 +33,7 @@ def interpretfile():
     return output
 
 class Node:
-    def __init__(self, nodes: list, layers):
+    def __init__(self, nodes, layers):
         self.w = []
         
         for a in range(layers):
@@ -50,8 +50,6 @@ class Node:
         # node
 
         # weight
-        print(f'''self.w looks like this:
-        {self.w}''')
         for i, a in enumerate(self.w[1:]):
             print(f'starting with layer {i + 1}')
             print(f'    looks like this: {a}')
@@ -126,6 +124,7 @@ class Node:
                 self.w[i-1][k][4] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0)
                 for j in range(len(self.w[i])):
                     self.w[i-1][k][5][j] += self.w[i][j][0][k] * self.w[i][k][4] * (1 if self.w[i-1][k][2] > self.w[i-1][k][1] else 0) * self.w[i-1][k][1]
+
 
 
 if __name__ == '__main__':
